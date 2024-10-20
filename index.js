@@ -1,15 +1,32 @@
 const { Command } = require('commander');
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
 const program = new Command();
 
 program
-  .name('bc2024-4')
-  .description('CLI application with Commander.js and SuperAgent')
-  .version('1.0.0');
+  .requiredOption('-h, --host <host>', 'адреса сервера')
+  .requiredOption('-p, --port <port>', 'порт сервера', parseInt)
+  .requiredOption('-c, --cache <path>', 'шлях до директорії для кешування')
+  .parse(process.argv);
 
-program.command('hello')
-  .description('Prints hello message')
-  .action(() => {
-    console.log('Hello from bc2024-4!');
-  });
+const { host, port, cache } = program.opts();
 
-program.parse(process.argv);
+// Перевірка і створення директорії кешу, якщо вона не існує
+if (!fs.existsSync(cache)) {
+  console.log(`Директорія ${cache} не існує. Створюємо...`);
+  fs.mkdirSync(cache, { recursive: true });
+  console.log(`Директорія ${cache} успішно створена.`);
+}
+
+// Створення веб-сервера
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Сервер працює коректно!\n');
+});
+
+// Запуск сервера з отриманими параметрами
+server.listen(port, host, () => {
+  console.log(`Сервер запущено на http://${host}:${port}`);
+});
