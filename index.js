@@ -2,6 +2,7 @@ const fsPromises = require('fs/promises');
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const superagent = require('superagent'); // Додайте цей рядок
 const commander = require('commander');
 
 const program = new commander.Command();
@@ -35,8 +36,18 @@ const handleGet = async (req, res, code) => {
     res.end(data);
   } catch (err) {
     if (err.code === 'ENOENT') {
-      res.writeHead(404);
-      res.end('Image not found');
+      // Якщо файл не знайдено, спробуйте отримати з http.cat
+      try {
+        const response = await superagent.get(`https://http.cat/${code}`);
+        const imageData = response.body; // Отримайте дані зображення
+        await fsPromises.writeFile(getFilePath(code), imageData); // Збережіть в кеш
+        res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+        res.end(imageData);
+      } catch (error) {
+        console.error(error);
+        res.writeHead(404);
+        res.end('Image not found on http.cat');
+      }
     } else {
       console.error(err);
       res.writeHead(500);
@@ -103,6 +114,7 @@ const handleRequest = async (req, res) => {
   }
 };
 
+// Оголошення змінної server
 const server = http.createServer(handleRequest);
 
 const startServer = async () => {
