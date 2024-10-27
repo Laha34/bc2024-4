@@ -2,7 +2,7 @@ const fsPromises = require('fs/promises');
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
-const superagent = require('superagent'); // Додайте цей рядок
+const superagent = require('superagent'); 
 const commander = require('commander');
 
 const program = new commander.Command();
@@ -17,14 +17,13 @@ const { host, port, cache } = program.opts();
 
 const getFilePath = (code) => path.join(cache, `${code}.jpg`);
 
-// Перевірка і створення кеш-директорії
 const ensureCacheDirectory = async () => {
   try {
     await fsPromises.mkdir(cache, { recursive: true });
     console.log(`Кеш директорія створена або вже існує: ${cache}`);
   } catch (err) {
     console.error('Помилка створення директорії:', err);
-    process.exit(1); // Вихід з процесу у разі помилки
+    process.exit(1);
   }
 };
 
@@ -36,11 +35,10 @@ const handleGet = async (req, res, code) => {
     res.end(data);
   } catch (err) {
     if (err.code === 'ENOENT') {
-      // Якщо файл не знайдено, спробуйте отримати з http.cat
       try {
         const response = await superagent.get(`https://http.cat/${code}`);
-        const imageData = response.body; // Отримайте дані зображення
-        await fsPromises.writeFile(getFilePath(code), imageData); // Збережіть в кеш
+        const imageData = response.body; 
+        await fsPromises.writeFile(getFilePath(code), imageData); 
         res.writeHead(200, { 'Content-Type': 'image/jpeg' });
         res.end(imageData);
       } catch (error) {
@@ -59,7 +57,7 @@ const handleGet = async (req, res, code) => {
 const handlePut = async (req, res, code) => {
   try {
     const filePath = getFilePath(code);
-    let data = Buffer.alloc(0); // Змінюємо тип для зберігання даних зображення
+    let data = Buffer.alloc(0); 
 
     req.on('data', (chunk) => {
       data = Buffer.concat([data, chunk]);
@@ -114,11 +112,10 @@ const handleRequest = async (req, res) => {
   }
 };
 
-// Оголошення змінної server
 const server = http.createServer(handleRequest);
 
 const startServer = async () => {
-  await ensureCacheDirectory(); // Перевірка та створення кеш-директорії
+  await ensureCacheDirectory();
   server.listen(port, host, () => {
     console.log(`Сервер запущено на http://${host}:${port}`);
   });
